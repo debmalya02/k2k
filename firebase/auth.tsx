@@ -1,43 +1,43 @@
 import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 
-// Set up reCAPTCHA verifier
-export const setUpRecaptcha = (elementId: string) => {
-  return new RecaptchaVerifier(auth, 'sign-in-button',{
-    'size': 'invisible', // or 'normal' based on your need
-    callback: (response: any) => {
-      // reCAPTCHA solved - allow phone authentication
-    },
-    'expired-callback': () => {
-      // Handle expired reCAPTCHA
-    },
-  });
-};
+// // Set up reCAPTCHA verifier
+// export const setUpRecaptcha = (elementId: string) => {
+//   return new RecaptchaVerifier(auth, 'sign-in-button',{
+//     'size': 'invisible', // or 'normal' based on your need
+//     callback: (response: any) => {
+//       // reCAPTCHA solved - allow phone authentication
+//     },
+//     'expired-callback': () => {
+//       // Handle expired reCAPTCHA
+//     },
+//   });
+// };
 
-// Function to send OTP
-export const sendOtp = async (phoneNumber: string) => {
-  setUpRecaptcha('recaptcha-container'); // Set up reCAPTCHA
-  const appVerifier = RecaptchaVerifier ;
+// // Function to send OTP
+// export const sendOtp = async (phoneNumber: string) => {
+//   setUpRecaptcha('recaptcha-container'); // Set up reCAPTCHA
+//   const appVerifier = RecaptchaVerifier ;
 
-  try {
-    const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-    window.recaptchaVerifier = confirmationResult;
-  } catch (error) {
-    console.error('Error sending OTP: ', error);
-    throw error;
-  }
-};
+//   try {
+//     const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+//     window.recaptchaVerifier = confirmationResult;
+//   } catch (error) {
+//     console.error('Error sending OTP: ', error);
+//     throw error;
+//   }
+// };
 
-// Function to verify OTP
-export const verifyOtp = async (confirmationResult: any, otp: string) => {
-  try {
-    const result = await confirmationResult.confirm(otp);
-    return result.user; // Authenticated user
-  } catch (error) {
-    console.error('Error verifying OTP: ', error);
-    throw error;
-  }
-};
+// // Function to verify OTP
+// export const verifyOtp = async (confirmationResult: any, otp: string) => {
+//   try {
+//     const result = await confirmationResult.confirm(otp);
+//     return result.user; // Authenticated user
+//   } catch (error) {
+//     console.error('Error verifying OTP: ', error);
+//     throw error;
+//   }
+// };
 
 
 // import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";

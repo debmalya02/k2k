@@ -29,8 +29,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-       <div className="min-h-screen bg-gray-100">
-          <nav className="bg-white shadow-sm">
+       <div className="bg-gray-100">
+          <nav className="bg-white shadow-sm fixed w-full z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
                 <div className="flex">
@@ -52,7 +52,8 @@ export default function RootLayout({
               </div>
             </div>
           </nav>
-          <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+{/* Suggested code may be subject to a license. Learn more: ~LicenseLog:1745807019. */}
+          <main className="max-w-7xl mx-auto pt-20 sm:px-6 lg:px-8 overflow-y-hidden">
             {children}
           </main>
         </div>
