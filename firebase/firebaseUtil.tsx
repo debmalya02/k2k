@@ -1,11 +1,11 @@
 // firebaseUtil.tsx
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { v4 as uuidv4 } from 'uuid';
 import {app,db,storage} from './firebaseConfig'
 
-
+import { doc, getDoc } from 'firebase/firestore';
 
 // Function to add a new product
 export const addProduct = async (productName: string, productDetails: string, productImage: File | null) => {
@@ -69,3 +69,82 @@ export const fetchProductCategories = async () => {
     return [];
   }
 };
+
+
+export const fetchProductByProductId = async (productId: string) => {
+  try {
+    // Reference to the specific product document by productId
+    const productDocRef = doc(db, 'productCategory', productId);
+    
+    // Fetch the product document
+    const productSnapshot = await getDoc(productDocRef);
+
+    if (!productSnapshot.exists()) {
+      throw new Error('Product not found');
+    }
+
+    // Return the product data along with the document id
+    return {
+      id: productSnapshot.id,
+      ...productSnapshot.data(),
+    };
+  } catch (error) {
+    console.error('Error fetching product by product ID: ', error);
+    return null;
+  }
+};
+
+
+export const fetchBatchesByProductId = async (productId: string) => {
+  try {
+    // Reference to the batches subcollection for a specific product
+    const batchesRef = collection(db, `productCategory/${productId}/batches`);
+    
+    // Fetch all documents from the batches subcollection
+    const batchSnapshot = await getDocs(batchesRef);
+
+    // Map over the batch documents and return their data
+    const batches = batchSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return batches; // Return the array of batch objects
+  } catch (error) {
+    console.error('Error fetching batches for product ID: ', error);
+    return [];
+  }
+};
+
+export const addBatchToProduct = async (productId: string, quantity: number, testReportUrl: string) => {
+  try {
+    const batchCollectionRef = collection(db, `productCategory/${productId}/batches`);
+    const batchQuery = query(batchCollectionRef, orderBy('batchNo', 'desc'));
+    const batchSnapshot = await getDocs(batchQuery);
+
+    // Initialize the first batch number
+    let newBatchNo = '001';
+
+    if (!batchSnapshot.empty) {
+      const lastBatch = batchSnapshot.docs[0].data();
+      const lastBatchNo = parseInt(lastBatch.batchNo);
+      newBatchNo = (lastBatchNo + 1).toString().padStart(3, '0'); // Increment batch number and pad with leading zeros
+    }
+
+    // Add a new batch to the batches subcollection
+    const batchRef = await addDoc(batchCollectionRef, {
+      batchNo: newBatchNo,  // Store the incremented batch number
+      quantity,
+      testReportUrl,  // Add test report URL if provided
+    });
+
+    return batchRef.id;  // Return the newly created batch ID
+  } catch (error) {
+    console.error("Error adding batch: ", error);
+    if (error instanceof Error) {
+      return { success: false, message: error.message };  // Handle the error with a message
+    }
+    return { success: false, message: 'An unknown error occurred' };  // Fallback for unknown errors
+  }
+};
+

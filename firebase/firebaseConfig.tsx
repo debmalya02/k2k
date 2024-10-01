@@ -1,6 +1,6 @@
 // Import the necessary Firebase modules
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+// import { getAnalytics } from "firebase/analytics";
 import { getAuth, setPersistence, browserSessionPersistence } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
 import { getFirestore } from "firebase/firestore"; 
@@ -21,7 +21,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const analytics = getAnalytics(app);
+// const analytics = getAnalytics(app);
 const functions = getFunctions(app);
 const db = getFirestore(app); 
 const storage = getStorage(app);
