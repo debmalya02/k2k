@@ -3,7 +3,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeApp } from 'firebase/app';
 import { v4 as uuidv4 } from 'uuid';
-import {app,db,storage} from './firebaseConfig'
+import { app, db, storage } from './firebaseConfig'
 
 import { doc, getDoc } from 'firebase/firestore';
 
@@ -75,7 +75,7 @@ export const fetchProductByProductId = async (productId: string) => {
   try {
     // Reference to the specific product document by productId
     const productDocRef = doc(db, 'productCategory', productId);
-    
+
     // Fetch the product document
     const productSnapshot = await getDoc(productDocRef);
 
@@ -99,7 +99,7 @@ export const fetchBatchesByProductId = async (productId: string) => {
   try {
     // Reference to the batches subcollection for a specific product
     const batchesRef = collection(db, `productCategory/${productId}/batches`);
-    
+
     // Fetch all documents from the batches subcollection
     const batchSnapshot = await getDocs(batchesRef);
 
@@ -115,6 +115,38 @@ export const fetchBatchesByProductId = async (productId: string) => {
     return [];
   }
 };
+
+// export const addBatchToProduct = async (productId: string, quantity: number, testReportUrl: string) => {
+//   try {
+//     const batchCollectionRef = collection(db, `productCategory/${productId}/batches`);
+//     const batchQuery = query(batchCollectionRef, orderBy('batchNo', 'desc'));
+//     const batchSnapshot = await getDocs(batchQuery);
+
+//     // Initialize the first batch number
+//     let newBatchNo = '001';
+
+//     if (!batchSnapshot.empty) {
+//       const lastBatch = batchSnapshot.docs[0].data();
+//       const lastBatchNo = parseInt(lastBatch.batchNo);
+//       newBatchNo = (lastBatchNo + 1).toString().padStart(3, '0'); // Increment batch number and pad with leading zeros
+//     }
+
+//     // Add a new batch to the batches subcollection
+//     const batchRef = await addDoc(batchCollectionRef, {
+//       batchNo: newBatchNo,  // Store the incremented batch number
+//       quantity,
+//       testReportUrl,  // Add test report URL if provided
+//     });
+
+//     return batchRef.id;  // Return the newly created batch ID
+//   } catch (error) {
+//     console.error("Error adding batch: ", error);
+//     if (error instanceof Error) {
+//       return { success: false, message: error.message };  // Handle the error with a message
+//     }
+//     return { success: false, message: 'An unknown error occurred' };  // Fallback for unknown errors
+//   }
+// };
 
 export const addBatchToProduct = async (productId: string, quantity: number, testReportUrl: string) => {
   try {
@@ -138,6 +170,39 @@ export const addBatchToProduct = async (productId: string, quantity: number, tes
       testReportUrl,  // Add test report URL if provided
     });
 
+    const batchId = batchRef.id; // The newly created batch ID
+
+    // Create a package subcollection for the batch
+    const packageCollectionRef = collection(db, `productCategory/${productId}/batches/${batchId}/packages`);
+
+    //productNo
+    const productCategoryRef = doc(collection(db, 'productCategory'), productId);
+    const productDoc = await getDoc(productCategoryRef);
+
+    const productData = productDoc.data();
+    const productNo = productData?.productCategoryId;
+    // Create multiple packages based on the provided quantity
+    for (let i = 1; i <= quantity; i++) {
+      const packageNo = i.toString().padStart(3, '0'); // Generate package number as a string, padded with zeros
+      const serialNo = `${productNo}-${newBatchNo}-${packageNo}`;  // Generate the serial number
+
+      // Add the package to the package subcollection
+      const packageRef = await addDoc(packageCollectionRef, {
+        packageNo,
+        serialNo,
+      });
+
+      // Store the package ID in the serial numbers collection
+      const serialNoCollectionRef = collection(db, `serialNumbers`);
+
+      await addDoc(serialNoCollectionRef, {
+        productCategoryId: productId,
+        batchId,
+        packageId: packageRef.id,  // Store the newly created package ID
+        serialNo,  // Store the serial number globally
+      });
+    }
+
     return batchRef.id;  // Return the newly created batch ID
   } catch (error) {
     console.error("Error adding batch: ", error);
@@ -148,3 +213,120 @@ export const addBatchToProduct = async (productId: string, quantity: number, tes
   }
 };
 
+
+
+export const fetchBatchDetails = async (productId: string, batchId: string) => {
+  try {
+    // Reference to the specific batch document
+    const batchDocRef = doc(db, `productCategory/${productId}/batches/${batchId}`);
+
+    // Fetch the batch document
+    const batchDoc = await getDoc(batchDocRef);
+
+    // Check if the document exists and return the data
+    if (batchDoc.exists()) {
+      const batchData = {
+        id: batchDoc.id,
+        ...batchDoc.data(),
+      };
+      return batchData; // Return the batch data
+    } else {
+      console.log('No such document!');
+      return null;
+    }
+  } catch (error) {
+    console.error('Error fetching batch details for product ID: ', error);
+    return null;
+  }
+};
+
+
+
+export const fetchPackageDetails = async (productId: string, batchId: string) => {
+  try {
+    // Reference to the packages subcollection for a specific batch
+    const packagesRef = collection(db, `productCategory/${productId}/batches/${batchId}/packages`);
+
+    // Fetch all documents from the packages subcollection
+    const packageSnapshot = await getDocs(packagesRef);
+
+    // Map over the package documents and return their data
+    const packages = packageSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return packages; // Return the array of package objects
+  } catch (error) {
+    console.error('Error fetching packages for product ID: ', error);
+    return []; // Return an empty array on error
+  }
+};
+
+
+
+export const addPackageToBatch = async (
+  productId: string,
+  batchId: string,
+  quantity: number
+) => {
+  try {
+
+    //productNo
+    const productCategoryRef = doc(collection(db, 'productCategory'), productId);
+    const productDoc = await getDoc(productCategoryRef);
+    const productData = productDoc.data();
+    const productNo = productData?.productCategoryId;
+
+    //batchNo
+    const batchCategoryRef = doc(collection(db, 'productCategory', productId, 'batched'), batchId);
+    const batchDoc = await getDoc(batchCategoryRef);
+    const batchData = batchDoc.data();
+    const batchNo = batchData?.batchNo;
+
+
+    const packageCollectionRef = collection(db, `productCategory/${productId}/batches/${batchId}/packages`);
+    const packageQuery = query(packageCollectionRef, orderBy('packageNo', 'desc'));
+    const packageSnapshot = await getDocs(packageQuery);
+    // Initialize the first package number
+    let newPackageNo = '001';
+
+    if (!packageSnapshot.empty) {
+      const lastPackage = packageSnapshot.docs[0].data();
+      const lastPackageNo = parseInt(lastPackage.packageNo, 10);
+      newPackageNo = (lastPackageNo + 1).toString().padStart(3, '0'); // Increment package number and pad with leading zeros
+    }
+
+    // Create a new package document
+    const packageRef = await addDoc(packageCollectionRef, {
+      packageNo: newPackageNo, // Store the incremented package number
+    });
+
+    // Create serial numbers for each package
+    for (let i = 1; i <= quantity; i++) {
+      const serialNo = `${productNo}-${batchNo}-${newPackageNo}`; // Serial number format
+
+
+      // // Add the package to the package subcollection
+      const packageRef = await addDoc(packageCollectionRef, {
+        newPackageNo,
+        serialNo,
+      });
+      // Add to serial numbers collection
+      await addDoc(collection(db, 'serialNumbers'), {
+        productCategoryId: productId,
+        batchId,
+        packageId: packageRef.id, // Use package reference ID
+        serialNo,  // Store the serial number globally
+      });
+    }
+
+    // return packageRef.id; // Return the newly created package ID
+  } catch (error) {
+    console.error("Error adding package: ", error);
+    if (error instanceof Error) {
+      return { success: false, message: error.message }; // Handle the error with a message
+    }
+    return { success: false, message: 'An unknown error occurred' }; // Fallback for unknown errors
+  }
+};

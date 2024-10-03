@@ -254,7 +254,7 @@ export default function AdminPanel() {
             className="w-48 h-48 bg-slate-300 flex flex-col items-center justify-center text-black rounded-md shadow-md"
           >
             <h3 className="font-bold text-lg">{category.productName}</h3>
-            <p className="text-sm">{category.productDetails}</p>
+            {/* <p className="text-sm">{category.productDetails}</p> */}
             {category.productImage && (
               <img
                 src={category.productImage}
