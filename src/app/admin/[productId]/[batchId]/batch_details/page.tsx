@@ -220,7 +220,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -231,15 +231,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Package, List } from "lucide-react"; // Icons for the buttons
+import { Plus, Package, List, ArrowUp, ArrowDown } from "lucide-react"; // Added ArrowUp and ArrowDown for sorting icons
 import {
   fetchBatchDetails,
   fetchPackageDetails,
   addPackageToBatch,
   generatePackets,
-  // generatePackets, // Add a function for generating packets (you can implement this in firebaseUtil)
 } from "../../../../../../firebase/firebaseUtil";
 import { useRouter } from "next/navigation"; // For navigation to other pages
+import * as XLSX from "xlsx"; // Importing xlsx for Excel export
 
 interface Props {
   params: {
@@ -258,9 +258,12 @@ interface BatchDetails {
 
 interface PackageDetails {
   id: string;
-  serialNo: string;
-  refractometerReport: string;
+  serialNo?: string; // Made optional
+  refractometerReport?: string; // Made optional
 }
+
+type SortKey = "no" | "serialNo" | null;
+type SortDirection = "asc" | "desc";
 
 const BatchDetails: React.FC<Props> = ({ params }) => {
   const [open, setOpen] = useState(false); // Dialog state for adding bottle
@@ -268,13 +271,16 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
   const [refractometerReport, setRefractometerReport] = useState("");
   const [packetQuantity, setPacketQuantity] = useState(0); // State for quantity input in Generate Packet dialog
   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null); // State for batch details
-  // const [packageDetails, setPackageDetails] = useState<PackageDetails[]>([]); // State for package details
-  const [packageDetails, setPackageDetails] = useState<any[]>([]);
+  const [packageDetails, setPackageDetails] = useState<PackageDetails[]>([]); // State for package details
 
   const [isLoading, setIsLoading] = useState(false); // Loading state for adding a bottle
   const router = useRouter(); // For navigation
 
   const { batchId, productId } = params;
+
+  // Sorting state
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   // Fetch batch details and packages on component mount
   useEffect(() => {
@@ -299,7 +305,7 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
 
       // Fetch updated package details after adding a new package
       const updatedPackages = await fetchPackageDetails(productId, batchId);
-      // setPackageDetails(updatedPackages);
+      setPackageDetails(updatedPackages);
 
       // Reset state and close dialog
       setRefractometerReport("");
@@ -336,6 +342,69 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
     router.push(`/admin/${productId}/${batchId}/existing_packets`);
   };
 
+  // Handle sorting
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      // Toggle sort direction if the same column is clicked
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new sort key and default to ascending
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  // Sort package details based on sortKey and sortDirection
+  const sortedPackageDetails = useMemo(() => {
+    return [...packageDetails].sort((a, b) => {
+      if (!sortKey) return 0; // No sorting
+      let aValue: any;
+      let bValue: any;
+
+      // if (sortKey === "no") {
+      //   aValue = packageDetails.indexOf(a) + 1;
+      //   bValue = packageDetails.indexOf(b) + 1;
+      // }
+      if (sortKey === "serialNo") {
+        aValue = a.serialNo?.toLowerCase() || "";
+        bValue = b.serialNo?.toLowerCase() || "";
+      } else {
+        return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [packageDetails, sortKey, sortDirection]);
+
+  // Handle Export to Excel
+  const handleExportToExcel = () => {
+    // Prepare data for Excel
+    const data = sortedPackageDetails.map((pkg, index) => ({
+      No: index + 1,
+      "Serial Number": pkg.serialNo || "",
+      "Refractometer Report": pkg.refractometerReport || "",
+    }));
+
+    // Create a worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    // Create a workbook and add the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Batch Details");
+    // Generate buffer
+    const excelBuffer = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+    // Create a blob
+    const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    // Trigger download
+    const url = window.URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Batch_${batchDetails?.batchNo || batchId}.xlsx`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen p-8 bg-gray-100">
       {/* Batch Number Section */}
@@ -352,28 +421,72 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
           <p>Limit: {batchDetails?.limitQuantity ?? "Not specified"}</p>
           <p>Quantity: {batchDetails?.quantity ?? "Not available"}</p>
         </div>
-        <Button className="text-white bg-red-600 hover:bg-red-700" onClick={handleOpenReportInNewTab}>
+        <Button
+          className="text-white bg-red-600 hover:bg-red-700"
+          onClick={handleOpenReportInNewTab}
+        >
           View Batch Report (PDF)
+        </Button>
+      </div>
+
+      {/* Export to Excel Button */}
+      <div className="mb-4 flex justify-end">
+        <Button
+          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+          onClick={handleExportToExcel}
+        >
+          Export to Excel
         </Button>
       </div>
 
       {/* Table Section */}
       <div className="overflow-x-auto bg-white shadow-lg rounded-md">
-        <table className="min-w-full bg-gray-100 rounded-md">
+        <table className="min-w-full bg-gray-100">
           <thead className="bg-gray-300">
             <tr>
-              <th className="px-6 py-3 border">No</th>
-              <th className="px-6 py-3 border">Serial Number</th>
-              <th className="px-6 py-3 border">Refractometer Report</th>
+              {/* No Column with Sorting */}
+              <th
+                className="px-6 py-3 border cursor-pointer text-center"
+                onClick={() => handleSort("no")}
+              >
+                <div className="inline-flex items-center">
+                  No
+                  {/* {sortKey === "no" && (
+                    sortDirection === "asc" ? (
+                      <ArrowUp className="ml-1 w-4 h-4 inline" />
+                    ) : (
+                      <ArrowDown className="ml-1 w-4 h-4 inline" />
+                    )
+                  )} */}
+                </div>
+              </th>
+              {/* Serial Number Column with Sorting */}
+              <th
+                className="px-6 py-3 border cursor-pointer text-center"
+                onClick={() => handleSort("serialNo")}
+              >
+                <div className="inline-flex items-center">
+                  Serial Number
+                  {sortKey === "serialNo" && (
+                    sortDirection === "asc" ? (
+                      <ArrowUp className="ml-1 w-4 h-4 inline" />
+                    ) : (
+                      <ArrowDown className="ml-1 w-4 h-4 inline" />
+                    )
+                  )}
+                </div>
+              </th>
+              {/* Refractometer Report Column without Sorting */}
+              <th className="px-6 py-3 border text-center">Refractometer Report</th>
             </tr>
           </thead>
           <tbody>
-            {packageDetails.length ? (
-              packageDetails.map((pkg, index) => (
-                <tr key={pkg.id}>
+            {sortedPackageDetails.length ? (
+              sortedPackageDetails.map((pkg, index) => (
+                <tr key={pkg.id} className="hover:bg-gray-200">
                   <td className="px-6 py-4 border text-center">{index + 1}</td>
-                  <td className="px-6 py-4 border text-center">{pkg.serialNo}</td>
-                  <td className="px-6 py-4 border text-center">{pkg.refractometerReport}</td>
+                  <td className="px-6 py-4 border text-center">{pkg.serialNo || "N/A"}</td>
+                  <td className="px-6 py-4 border text-center">{pkg.refractometerReport || "N/A"}</td>
                 </tr>
               ))
             ) : (
@@ -389,20 +502,6 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
 
       {/* Floating Action Buttons */}
       <div className="fixed bottom-8 right-8 space-y-4">
-        {/* Add Bottle Button 
-        <Button
-          disabled={
-            batchDetails?.limitQuantity !== undefined &&
-            batchDetails?.quantity !== undefined &&
-            batchDetails.limitQuantity <= batchDetails.quantity
-          }
-          className="text-white bg-green-600 hover:bg-green-700 flex items-center gap-2"
-          onClick={() => setOpen(true)}
-        >
-          <Plus className="w-4 h-4" /> Add Bottle
-        </Button>
-        */}
-
         {/* Generate Packet Button */}
         <Button
           className="text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2"
@@ -445,7 +544,9 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
             </div>
             <DialogFooter>
               <Button
-                className={`bg-green-500 text-white ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                className={`bg-green-500 text-white ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
                 onClick={handleAddBottle}
                 disabled={isLoading}
               >
