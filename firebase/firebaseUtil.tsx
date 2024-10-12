@@ -386,3 +386,118 @@ export const addPackageToBatch = async (
     return { success: false, message: "An unknown error occurred" }; // Fallback for unknown errors
   }
 };
+
+
+export const generatePackets = async (
+  productId: string,
+  batchId: string,
+  quantity: number, 
+) => {
+  try {
+    // Step 1: Fetch product data
+    const productCategoryRef = doc(collection(db, "productCategory"), productId);
+    const productDoc = await getDoc(productCategoryRef);
+    const productData = productDoc.data();
+    const productNo = productData?.productCategoryId;
+
+    // Step 2: Fetch batch data
+    const batchCategoryRef = doc(
+      collection(db, "productCategory", productId, "batches"),
+      batchId
+    );
+    const batchDoc = await getDoc(batchCategoryRef);
+    const batchData = batchDoc.data();
+    const batchNo = batchData?.batchNo;
+
+    // Step 3: Get current quantity from batch
+    let currentQuantity = batchData?.quantity || 0;
+
+    // Step 4: Get the latest package number
+    const packageCollectionRef = collection(
+      db,
+      `productCategory/${productId}/batches/${batchId}/packages`
+    );
+    const packageQuery = query(
+      packageCollectionRef,
+      orderBy("packageNo", "desc")
+    );
+    const packageSnapshot = await getDocs(packageQuery);
+
+    let lastPackageNo = 0;
+    if (!packageSnapshot.empty) {
+      const lastPackage = packageSnapshot.docs[0].data();
+      lastPackageNo = parseInt(lastPackage.packageNo);
+    }
+
+    // Step 5: Loop to generate the specified quantity of packages
+    const generatedPackages: any[] = []; // Array to store generated package references
+    for (let i = 1; i <= quantity; i++) {
+      const newPackageNo = (lastPackageNo + i).toString().padStart(3, "0"); // Generate new package number
+      const serialNo = `${productNo}-${batchNo}-${newPackageNo}`; // Generate serial number
+
+      // Add the package to the package subcollection
+      const packageRef = await addDoc(packageCollectionRef, {
+        packageNo: newPackageNo,
+        refractometerReport:"",
+        serialNo,
+      });
+
+      // Add to serial numbers collection
+      await addDoc(collection(db, "serialNumbers"), {
+        productCategoryId: productId,
+        batchId,
+        packageId: packageRef.id, // Use package reference ID
+        serialNo, // Store the serial number globally
+      });
+
+      generatedPackages.push(packageRef.id); // Store the created package ID
+    }
+
+    // Update batch quantity by adding the new packages
+    currentQuantity += quantity;
+    await updateDoc(batchCategoryRef, {
+      quantity: currentQuantity, // Update batch with the new quantity
+    });
+
+    return generatedPackages; // Return the list of created package IDs
+  } catch (error) {
+    console.error("Error generating packages: ", error);
+    if (error instanceof Error) {
+      return { success: false, message: error.message }; // Handle the error with a message
+    }
+    return { success: false, message: "An unknown error occurred" }; // Fallback for unknown errors
+  }
+};
+
+
+export const fetchExistingPackets = async (productId: string, batchId: string) => {
+  try {
+    // Reference to the collection
+    const packagesRef = collection(
+      db,
+      "productCategory",
+      productId,
+      "batches",
+      batchId,
+      "packages"
+    );
+
+    // Build a query to get packages where refractometerReport is empty
+    const q = query(packagesRef, where("refractometerReport", "==", ""));
+
+    // Execute the query
+    const snapshot = await getDocs(q);
+
+    // Map through the results and return packets
+    const packets = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    return packets;
+  } catch (error) {
+    console.error("Error fetching existing packets:", error);
+    return [];
+  }
+};
+

@@ -137,7 +137,7 @@ const BatchesPage: React.FC<Props> = ({ params }) => {
             <div className="mt-4 space-y-4">
               <div>
                 <label htmlFor="quantity" className="block text-sm font-medium">
-                  Quantity
+                  Max Batch Size
                 </label>
                 <Input
                   id="quantity"
