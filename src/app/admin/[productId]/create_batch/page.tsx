@@ -145,6 +145,7 @@ const BatchesPage: React.FC<Props> = ({ params }) => {
                   value={quantity}
                   onChange={(e) => setQuantity(e.target.value)}
                   className="w-full mt-1"
+                  required
                 />
               </div>
               <div>
@@ -155,6 +156,8 @@ const BatchesPage: React.FC<Props> = ({ params }) => {
                   type="file"
                   onChange={handleFileChange}
                   className="mb-4"
+                  required
+
                 />
               </div>
               <div>

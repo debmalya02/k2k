@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
-import Link from 'next/link'
+import Link from 'next/link';
+import { Toaster } from "react-hot-toast"; // Import Toaster
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,7 +30,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-       <div className="bg-gray-100">
+        <div className="bg-gray-100">
+          {/* Navigation Bar */}
           <nav className="bg-white shadow-sm fixed w-full z-10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between h-16">
@@ -48,15 +50,19 @@ export default function RootLayout({
                     Customer Search
                   </Link>
                 </div>
-                {/* Client Component for Menu Toggle */}
               </div>
             </div>
           </nav>
-{/* Suggested code may be subject to a license. Learn more: ~LicenseLog:1745807019. */}
+
+          {/* Main Content */}
           <main className="max-w-7xl mx-auto pt-20 sm:px-6 lg:px-8 overflow-y-hidden">
             {children}
           </main>
         </div>
+
+        {/* Toaster for notifications */}
+        <Toaster position="top-right" reverseOrder={false} /> {/* Toaster placed here */}
+
       </body>
     </html>
   );

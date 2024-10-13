@@ -14,9 +14,9 @@
 // import { Plus } from "lucide-react"; // Optional icon for the button
 // import {
 //   fetchBatchDetails,
-//   fetchPackageDetails,
-//   addPackageToBatch,
-// } from "../../../../../../firebase/firebaseUtil"; // Import addPackageToBatch function
+//   fetchPacketDetails,
+//   addPacketToBatch,
+// } from "../../../../../../firebase/firebaseUtil"; // Import addPacketToBatch function
 
 // interface Props {
 //   params: {
@@ -37,7 +37,7 @@
 //   const [open, setOpen] = useState(false); // Dialog state
 //   const [refractometerReport, setRefractometerReport] = useState("");
 //   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null); // State for batch details
-//   const [packageDetails, setPackageDetails] = useState<any[]>([]);
+//   const [packetDetails, setpacketDetails] = useState<any[]>([]);
 
 //   const { batchId, productId } = params;
 
@@ -46,24 +46,24 @@
 //     const fetchData = async () => {
 //       const details = await fetchBatchDetails(productId, batchId);
 //       setBatchDetails(details);
-//       const packageDetails = await fetchPackageDetails(productId, batchId);
-//       setPackageDetails(packageDetails);
+//       const packetDetails = await fetchPacketDetails(productId, batchId);
+//       setpacketDetails(packetDetails);
 //     };
 //     fetchData();
 //   }, [productId, batchId]);
 
-//   // Handle adding a new bottle (package) to the batch
+//   // Handle adding a new bottle (packet) to the batch
 //   const handleAddBottle = async () => {
 //     try {
-//       // Call addPackageToBatch to create new packages for this batch
-//       await addPackageToBatch(productId, batchId, refractometerReport);
+//       // Call addPacketToBatch to create new packets for this batch
+//       await addPacketToBatch(productId, batchId, refractometerReport);
 
-//       // Refetch package details after adding a new package
-//       const updatedPackageDetails = await fetchPackageDetails(
+//       // Refetch packet details after adding a new packet
+//       const updatedpacketDetails = await fetchPacketDetails(
 //         productId,
 //         batchId
 //       );
-//       setPackageDetails(updatedPackageDetails);
+//       setpacketDetails(updatedpacketDetails);
 
 //       // Reset state and close dialog
 //       setRefractometerReport("");
@@ -123,8 +123,8 @@
 //             </tr>
 //           </thead>
 //           <tbody>
-//             {packageDetails.length ? (
-//               packageDetails.map((row, index) => (
+//             {packetDetails.length ? (
+//               packetDetails.map((row, index) => (
 //                 <tr key={row.id}>
 //                   <td className="px-4 py-2 border text-center">{index + 1}</td>
 //                   <td className="px-4 py-2 border text-center">
@@ -234,8 +234,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Package, List, ArrowUp, ArrowDown } from "lucide-react"; // Added ArrowUp and ArrowDown for sorting icons
 import {
   fetchBatchDetails,
-  fetchPackageDetails,
-  addPackageToBatch,
+  fetchPacketDetails,
+  addPacketToBatch,
   generatePackets,
 } from "../../../../../../firebase/firebaseUtil";
 import { useRouter } from "next/navigation"; // For navigation to other pages
@@ -256,7 +256,7 @@ interface BatchDetails {
   testReport?: string;
 }
 
-interface PackageDetails {
+interface packetDetails {
   id: string;
   serialNo?: string; // Made optional
   refractometerReport?: string; // Made optional
@@ -271,7 +271,7 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
   const [refractometerReport, setRefractometerReport] = useState("");
   const [packetQuantity, setPacketQuantity] = useState(0); // State for quantity input in Generate Packet dialog
   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null); // State for batch details
-  const [packageDetails, setPackageDetails] = useState<PackageDetails[]>([]); // State for package details
+  const [packetDetails, setpacketDetails] = useState<packetDetails[]>([]); // State for packet details
 
   const [isLoading, setIsLoading] = useState(false); // Loading state for adding a bottle
   const router = useRouter(); // For navigation
@@ -282,30 +282,30 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  // Fetch batch details and packages on component mount
+  // Fetch batch details and packets on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
         const details = await fetchBatchDetails(productId, batchId);
         setBatchDetails(details);
-        const packages = await fetchPackageDetails(productId, batchId);
-        setPackageDetails(packages);
+        const packets = await fetchPacketDetails(productId, batchId);
+        setpacketDetails(packets);
       } catch (error) {
-        console.error("Error fetching batch or package details:", error);
+        console.error("Error fetching batch or packet details:", error);
       }
     };
     fetchData();
   }, [productId, batchId]);
 
-  // Handle adding a new bottle (package) to the batch
+  // Handle adding a new bottle (packet) to the batch
   const handleAddBottle = async () => {
     setIsLoading(true);
     try {
-      await addPackageToBatch(productId, batchId, refractometerReport);
+      await addPacketToBatch(productId, batchId, refractometerReport);
 
-      // Fetch updated package details after adding a new package
-      const updatedPackages = await fetchPackageDetails(productId, batchId);
-      setPackageDetails(updatedPackages);
+      // Fetch updated packet details after adding a new packet
+      const updatedpackets = await fetchPacketDetails(productId, batchId);
+      setpacketDetails(updatedpackets);
 
       // Reset state and close dialog
       setRefractometerReport("");
@@ -354,16 +354,16 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
     }
   };
 
-  // Sort package details based on sortKey and sortDirection
-  const sortedPackageDetails = useMemo(() => {
-    return [...packageDetails].sort((a, b) => {
+  // Sort packet details based on sortKey and sortDirection
+  const sortedpacketDetails = useMemo(() => {
+    return [...packetDetails].sort((a, b) => {
       if (!sortKey) return 0; // No sorting
       let aValue: any;
       let bValue: any;
 
       // if (sortKey === "no") {
-      //   aValue = packageDetails.indexOf(a) + 1;
-      //   bValue = packageDetails.indexOf(b) + 1;
+      //   aValue = packetDetails.indexOf(a) + 1;
+      //   bValue = packetDetails.indexOf(b) + 1;
       // }
       if (sortKey === "serialNo") {
         aValue = a.serialNo?.toLowerCase() || "";
@@ -376,12 +376,12 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
       if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
       return 0;
     });
-  }, [packageDetails, sortKey, sortDirection]);
+  }, [packetDetails, sortKey, sortDirection]);
 
   // Handle Export to Excel
   const handleExportToExcel = () => {
     // Prepare data for Excel
-    const data = sortedPackageDetails.map((pkg, index) => ({
+    const data = sortedpacketDetails.map((pkg, index) => ({
       No: index + 1,
       "Serial Number": pkg.serialNo || "",
       "Refractometer Report": pkg.refractometerReport || "",
@@ -481,8 +481,8 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
             </tr>
           </thead>
           <tbody>
-            {sortedPackageDetails.length ? (
-              sortedPackageDetails.map((pkg, index) => (
+            {sortedpacketDetails.length ? (
+              sortedpacketDetails.map((pkg, index) => (
                 <tr key={pkg.id} className="hover:bg-gray-200">
                   <td className="px-6 py-4 border text-center">{index + 1}</td>
                   <td className="px-6 py-4 border text-center">{pkg.serialNo || "N/A"}</td>
@@ -492,7 +492,7 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
             ) : (
               <tr>
                 <td colSpan={3} className="px-6 py-4 border text-center">
-                  No package details found
+                  No packet details found
                 </td>
               </tr>
             )}

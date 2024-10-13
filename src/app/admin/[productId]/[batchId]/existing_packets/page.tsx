@@ -24,7 +24,7 @@
 
 //   const { productId, batchId } = params;
 
-  
+
 //   useEffect(() => {
 //     const fetchPackets = async () => {
 //       try {
@@ -36,10 +36,10 @@
 //         setIsLoading(false);
 //       }
 //     };
-  
+
 //     fetchPackets();
 //   }, [productId, batchId]);
-  
+
 
 //   return (
 //     <div className="min-h-screen p-8 bg-gray-100">
@@ -102,11 +102,13 @@ import React, { useState, useEffect } from "react";
 import { fetchExistingPackets } from "../../../../../../firebase/firebaseUtil";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import * as XLSX from "xlsx"; // XLSX library for Excel export
+import * as XLSX from "xlsx"; 
 
-interface PacketDetails {
+interface Packet {
   id: string;
   serialNo: string;
+  refractometerReport: string;
+  packetNo: string;
 }
 
 interface Props {
@@ -117,18 +119,18 @@ interface Props {
 }
 
 const ExistingPacket: React.FC<Props> = ({ params }) => {
-  const [existingPackets, setExistingPackets] = useState<any[]>([]);
+  const [existingPackets, setExistingPackets] = useState<Packet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSortedAsc, setIsSortedAsc] = useState(true); // Sorting state
+  const [isSortedAsc, setIsSortedAsc] = useState(true);
   const router = useRouter();
   const { productId, batchId } = params;
 
-  // Fetch packets data
   useEffect(() => {
     const fetchPackets = async () => {
       try {
         const packets = await fetchExistingPackets(productId, batchId);
         setExistingPackets(packets);
+        // console.log('packets',existingPackets)
       } catch (error) {
         console.error("Error fetching existing packets:", error);
       } finally {
@@ -146,10 +148,10 @@ const ExistingPacket: React.FC<Props> = ({ params }) => {
         : b.serialNo.localeCompare(a.serialNo)
     );
     setExistingPackets(sortedPackets);
-    setIsSortedAsc(!isSortedAsc); // Toggle sorting order
+    setIsSortedAsc(!isSortedAsc);
   };
 
-  // Export to Excel function using XLSX only
+  // Export to Excel function
   const exportToExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       existingPackets.map((packet, index) => ({
@@ -160,7 +162,6 @@ const ExistingPacket: React.FC<Props> = ({ params }) => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Packets");
 
-    // Trigger Excel download directly in browser
     XLSX.writeFile(workbook, `existing_packets_${productId}_${batchId}.xlsx`);
   };
 
@@ -172,7 +173,6 @@ const ExistingPacket: React.FC<Props> = ({ params }) => {
         </h1>
       </div>
 
-      {/* Back Button and Export Button */}
       <div className="mb-4 flex justify-between">
         <Button
           className="bg-blue-600 text-white hover:bg-blue-700"
@@ -183,16 +183,20 @@ const ExistingPacket: React.FC<Props> = ({ params }) => {
         <Button className="bg-green-600 text-white hover:bg-green-700" onClick={exportToExcel}>
           Export to Excel
         </Button>
+        <Button
+          className="fixed bottom-8 right-8 bg-blue-600 text-white hover:bg-blue-700 rounded-full p-4"
+          onClick={() => router.push(`/admin/${productId}/${batchId}/add_refractometer_report`)}
+        >
+          Add Refractometer Report
+        </Button>
       </div>
 
-      {/* Loading State */}
       {isLoading ? (
         <div className="flex justify-center items-center">
           <p className="text-gray-600">Loading...</p>
         </div>
       ) : (
         <div className="overflow-x-auto bg-white shadow-lg rounded-md">
-          {/* Table Section */}
           <table className="min-w-full bg-gray-100 rounded-md">
             <thead className="bg-gray-300">
               <tr>
