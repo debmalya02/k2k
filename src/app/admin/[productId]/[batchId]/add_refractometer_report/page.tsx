@@ -429,7 +429,7 @@ const AddRefractometerReport: React.FC<Props> = ({ params }) => {
       <div className="bg-white p-6 rounded shadow-md">
         {serialNumbers.length > 0 ? (
           <>
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label className="block mb-2">Product Number</label>
               <input
                 type="text"
@@ -458,7 +458,38 @@ const AddRefractometerReport: React.FC<Props> = ({ params }) => {
                 onChange={(e) => setPacketNo(e.target.value)}
                 placeholder="Enter packet number"
               />
-            </div>
+            </div> */}
+
+<div className="mb-4">
+  <label className="block mb-2">Serial Number</label>
+  <div className="flex space-x-2">
+    {/* Product Number (Read-only) */}
+    <input
+      type="text"
+      className="w-1/3 p-2 border rounded bg-gray-100"
+      value={serialNumbers[0].productNo}
+      readOnly
+    />
+    
+    {/* Batch Number (Read-only) */}
+    <input
+      type="text"
+      className="w-1/3 p-2 border rounded bg-gray-100"
+      value={serialNumbers[0].batchNo}
+      readOnly
+    />
+    
+    {/* Packet Number (Editable) */}
+    <input
+      type="text"
+      className="w-1/3 p-2 border rounded"
+      value={packetNo}
+      onChange={(e) => setPacketNo(e.target.value)}
+      placeholder="Enter last digits"
+    />
+  </div>
+</div>
+
 
             <div className="mb-4">
               <label className="block mb-2">Refractometer Report</label>

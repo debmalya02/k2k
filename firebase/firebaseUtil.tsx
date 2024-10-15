@@ -8,6 +8,7 @@ import {
   where,
   orderBy,
   updateDoc,
+  setDoc
 } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { initializeApp } from "firebase/app";
@@ -377,7 +378,7 @@ export const addPacketToBatch = async (
       refractometerReport,
     });
     // Add to serial numbers collection
-    await addDoc(collection(db, "serialNumbers"), {
+    await setDoc(doc(db, "serialNumbers", serialNo), {
       productCategoryId: productId,
       batchId,
       packetId: packetRef.id, // Use packet reference ID
@@ -456,7 +457,13 @@ export const generatePackets = async (
       });
 
       // Add to serial numbers collection
-      await addDoc(collection(db, "serialNumbers"), {
+      // await addDoc(collection(db, "serialNumbers"), {
+      //   productCategoryId: productId,
+      //   batchId,
+      //   packetId: packetRef.id, // Use packet reference ID
+      //   serialNo, // Store the serial number globally
+      // });
+      await setDoc(doc(db, "serialNumbers", serialNo), {
         productCategoryId: productId,
         batchId,
         packetId: packetRef.id, // Use packet reference ID
@@ -628,5 +635,111 @@ export const updateRefractometerReport = async (
   } catch (error) {
     console.error("Error updating refractometer report:", error);
     throw error;
+  }
+};
+
+
+
+
+// Function to fetch product, batch, and packet details by serial number
+export const fetchCustomerDetailsBySerialNo = async (serialNo: string) => {
+  try {
+    // Query the serialNumbers collection
+    const serialRef = collection(db, "serialNumbers");
+    const serialSnapshot = await getDoc(doc(serialRef, serialNo));
+    
+    if (!serialSnapshot.exists()) {
+      throw new Error("Serial number not found.");
+    }
+
+    const serialData = serialSnapshot.data();
+    const { batchId, packetId, productCategoryId } = serialData;
+
+    // Fetch product details
+    const productCategoryRef = doc(collection(db, "productCategory"), productCategoryId);
+    const productCategorySnapshot = await getDoc(productCategoryRef);
+    const productData = productCategorySnapshot.data();
+
+    // Fetch batch details
+    const batchRef = doc(collection(productCategoryRef, "batches"), batchId);
+    const batchSnapshot = await getDoc(batchRef);
+    const batchData = batchSnapshot.data();
+
+    // Fetch packet details
+    const packetRef = doc(collection(batchRef, "packets"), packetId);
+    const packetSnapshot = await getDoc(packetRef);
+    const packetData = packetSnapshot.data();
+
+    // Combine all the data and return
+    return {
+      product: {
+        name: productData?.productName,
+        details: productData?.productDetails,
+        image: productData?.productImage,
+      },
+      batch: {
+        batchNo: batchData?.batchNo,
+        testReport: batchData?.testReport,
+        quantity: batchData?.quantity,
+      },
+      packet: {
+        packetNo: packetData?.packetNo,
+        refractometerReport: packetData?.refractometerReport,
+      }
+    };
+  } catch (error) {
+    console.error("Error fetching customer details:", error);
+    throw error;
+  }
+};
+
+
+
+export const fetchCustomerDetails = async (serialNo: string) => {
+  try {
+    // Query the "serialNumbers" collection to find the packet with the serial number
+    const serialNumbersRef = doc(db, "serialNumbers", serialNo);
+    const serialSnapshot = await getDoc(serialNumbersRef);
+
+    if (!serialSnapshot.exists()) {
+      return null;
+    }
+
+    const { productCategoryId, batchId, packetId } = serialSnapshot.data();
+
+    // Fetch product details
+    const productRef = doc(db, "productCategory", productCategoryId);
+    const productSnapshot = await getDoc(productRef);
+    const productData = productSnapshot.data();
+
+    // Fetch batch details
+    const batchRef = doc(db, "productCategory", productCategoryId, "batches", batchId);
+    const batchSnapshot = await getDoc(batchRef);
+    const batchData = batchSnapshot.data();
+
+    // Fetch packet details
+    const packetRef = doc(
+      db,
+      "productCategory",
+      productCategoryId,
+      "batches",
+      batchId,
+      "packets",
+      packetId
+    );
+    const packetSnapshot = await getDoc(packetRef);
+    const packetData = packetSnapshot.data();
+
+    return {
+      productName: productData?.productName,
+      productDetails: productData?.productDetails,
+      productImage: productData?.productImage,
+      batchNo: batchData?.batchNo,
+      testReport: batchData?.testReport,
+      refractometerReport: packetData?.refractometerReport,
+    };
+  } catch (error) {
+    console.error("Error fetching customer details:", error);
+    return null;
   }
 };
