@@ -56,6 +56,7 @@ export default function RootLayout({
 
           {/* Main Content */}
           <main className="max-w-7xl mx-auto pt-20 sm:px-6 lg:px-8 overflow-y-hidden">
+          {/* <main className=""> */}
             {children}
           </main>
         </div>
