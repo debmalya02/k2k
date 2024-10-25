@@ -1,223 +1,3 @@
-// "use client";
-
-// import React, { useState, useEffect } from "react";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogFooter,
-// } from "@/components/ui/dialog";
-// import { Input } from "@/components/ui/input";
-// import { Textarea } from "@/components/ui/textarea";
-// import { Plus } from "lucide-react"; // Optional icon for the button
-// import {
-//   fetchBatchDetails,
-//   fetchPacketDetails,
-//   addPacketToBatch,
-// } from "../../../../../../firebase/firebaseUtil"; // Import addPacketToBatch function
-
-// interface Props {
-//   params: {
-//     batchId: string;
-//     productId: string;
-//   };
-// }
-
-// interface BatchDetails {
-//   id: string;
-//   limitQuantity?: number;
-//   quantity?: number;
-//   batchNo?: string;
-//   testReport?: string;
-// }
-
-// const BatchDetails: React.FC<Props> = ({ params }) => {
-//   const [open, setOpen] = useState(false); // Dialog state
-//   const [refractometerReport, setRefractometerReport] = useState("");
-//   const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null); // State for batch details
-//   const [packetDetails, setpacketDetails] = useState<any[]>([]);
-
-//   const { batchId, productId } = params;
-
-//   // Fetch batch details when the component mounts
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       const details = await fetchBatchDetails(productId, batchId);
-//       setBatchDetails(details);
-//       const packetDetails = await fetchPacketDetails(productId, batchId);
-//       setpacketDetails(packetDetails);
-//     };
-//     fetchData();
-//   }, [productId, batchId]);
-
-//   // Handle adding a new bottle (packet) to the batch
-//   const handleAddBottle = async () => {
-//     try {
-//       // Call addPacketToBatch to create new packets for this batch
-//       await addPacketToBatch(productId, batchId, refractometerReport);
-
-//       // Refetch packet details after adding a new packet
-//       const updatedpacketDetails = await fetchPacketDetails(
-//         productId,
-//         batchId
-//       );
-//       setpacketDetails(updatedpacketDetails);
-
-//       // Reset state and close dialog
-//       setRefractometerReport("");
-//       setOpen(false);
-//     } catch (error) {
-//       console.error("Error adding bottle:", error);
-//     }
-//   };
-
-//   // Function to open the test report in a new tab
-//   const handleOpenReportInNewTab = () => {
-//     if (batchDetails && batchDetails.testReport) {
-//       window.open(batchDetails.testReport, "_blank");
-//     } else {
-//       console.error("Test report URL not available");
-//     }
-//   };
-
-//   return (
-//     <div className="min-h-screen p-8">
-//       {/* Batch Number Section */}
-//       <div className="bg-gray-300 p-4 rounded-md mb-4 text-center">
-//         <h1 className="text-xl font-semibold">
-//           Batch No: {batchDetails ? batchDetails.batchNo : ""}
-//         </h1>
-//       </div>
-
-//       {/* Batch Details & Report Button */}
-//       <div className="flex justify-between items-center mb-6">
-//         <div className="bg-yellow-400 p-4 rounded-md">
-//           <h2 className="font-semibold">Batch Details</h2>
-//           <p>
-//             Limit :{" "}
-//             {batchDetails
-//               ? batchDetails.limitQuantity?.toString()
-//               : "No BOTTLE"}
-//           </p>
-//           <p>
-//             Quantity :{" "}
-//             {batchDetails ? batchDetails.quantity?.toString() : "No Bottle"}
-//           </p>
-//         </div>
-//         {/* {batchDetails ? batchDetails.testReport:'NO report'} */}
-//         <Button className="text-white" onClick={handleOpenReportInNewTab}>
-//           Batch Report (PDF)
-//         </Button>
-//       </div>
-
-//       {/* Table Section */}
-//       <div className="overflow-x-auto">
-//         <table className="min-w-full bg-gray-300">
-//           <thead className="bg-gray-400">
-//             <tr>
-//               <th className="px-4 py-2 border">No</th>
-//               <th className="px-4 py-2 border">Serial Number</th>
-//               <th className="px-4 py-2 border">Refractometer Report</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {packetDetails.length ? (
-//               packetDetails.map((row, index) => (
-//                 <tr key={row.id}>
-//                   <td className="px-4 py-2 border text-center">{index + 1}</td>
-//                   <td className="px-4 py-2 border text-center">
-//                     {row.serialNo}
-//                   </td>
-//                   <td className="px-4 py-2 border text-center">
-//                     {row.refractometerReport}
-//                   </td>
-//                 </tr>
-//               ))
-//             ) : (
-//               <tr>
-//                 <td colSpan={3} className="px-4 py-2 border text-center">
-//                   No batch details found
-//                 </td>
-//               </tr>
-//             )}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {/* Floating Add Bottle Button */}
-//       <div className="fixed bottom-8 right-8">
-//         <div className="fixed bottom-8 right-8">
-//           <Button
-
-//             disabled={
-//               batchDetails?.limitQuantity !== undefined &&
-//               batchDetails?.quantity !== undefined &&
-//               batchDetails.limitQuantity <= batchDetails.quantity
-//             }
-//             className="text-white flex items-center gap-2"
-//             onClick={() => setOpen(true)}
-//           >
-//             <Plus className="w-4 h-4" /> Add Bottle
-//           </Button>
-//         </div>
-//       </div>
-
-//       {/* Add Bottle Dialog */}
-//       {open && (
-//         <Dialog open={open} onOpenChange={setOpen}>
-//           <DialogContent>
-//             <DialogHeader>
-//               <DialogTitle>Add New Bottle</DialogTitle>
-//             </DialogHeader>
-//             <div className="mt-4 space-y-4">
-//               {/* <div>
-//                 <label htmlFor="quantity" className="block text-sm font-medium">
-//                   Quantity
-//                 </label>
-//                 <Input
-//                   id="quantity"
-//                   type="number"
-//                   value={quantity}
-//                   onChange={(e) => setQuantity(e.target.value)}
-//                   className="w-full mt-1"
-//                 />
-//               </div> */}
-//               <div>
-//                 <label
-//                   htmlFor="refractometer-report"
-//                   className="block text-sm font-medium"
-//                 >
-//                   Refractometer Report
-//                 </label>
-//                 <Textarea
-//                   id="refractometer-report"
-//                   value={refractometerReport}
-//                   onChange={(e) => setRefractometerReport(e.target.value)}
-//                   className="w-full mt-1"
-//                 />
-//               </div>
-//             </div>
-//             <DialogFooter>
-//               <Button
-//                 className="bg-green-500 text-white"
-//                 onClick={handleAddBottle}
-//               >
-//                 Add Bottle
-//               </Button>
-//             </DialogFooter>
-//           </DialogContent>
-//         </Dialog>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default BatchDetails;
-
-
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -231,15 +11,28 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Package, List, ArrowUp, ArrowDown } from "lucide-react"; // Added ArrowUp and ArrowDown for sorting icons
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Plus,
+  Package,
+  List,
+  ArrowUp,
+  ArrowDown,
+  FileText,
+  Download,
+  Beaker,
+  FlaskConical,
+  Layers
+} from "lucide-react";
 import {
   fetchBatchDetails,
   fetchPacketDetails,
   addPacketToBatch,
   generatePackets,
 } from "../../../../../../firebase/firebaseUtil";
-import { useRouter } from "next/navigation"; // For navigation to other pages
-import * as XLSX from "xlsx"; // Importing xlsx for Excel export
+import { useRouter } from "next/navigation";
+import * as XLSX from "xlsx";
 
 interface Props {
   params: {
@@ -256,40 +49,36 @@ interface BatchDetails {
   testReport?: string;
 }
 
-interface packetDetails {
+interface PacketDetails {
   id: string;
-  serialNo?: string; // Made optional
-  refractometerReport?: string; // Made optional
+  serialNo?: string;
+  refractometerReport?: string;
 }
 
 type SortKey = "no" | "serialNo" | null;
 type SortDirection = "asc" | "desc";
 
 const BatchDetails: React.FC<Props> = ({ params }) => {
-  const [open, setOpen] = useState(false); // Dialog state for adding bottle
-  const [openGeneratePacket, setOpenGeneratePacket] = useState(false); // Dialog state for generating packet
+  const [open, setOpen] = useState(false);
+  const [openGeneratePacket, setOpenGeneratePacket] = useState(false);
   const [refractometerReport, setRefractometerReport] = useState("");
-  const [packetQuantity, setPacketQuantity] = useState(0); // State for quantity input in Generate Packet dialog
-  const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null); // State for batch details
-  const [packetDetails, setpacketDetails] = useState<packetDetails[]>([]); // State for packet details
-
-  const [isLoading, setIsLoading] = useState(false); // Loading state for adding a bottle
-  const router = useRouter(); // For navigation
-
-  const { batchId, productId } = params;
-
-  // Sorting state
+  const [packetQuantity, setPacketQuantity] = useState(0);
+  const [batchDetails, setBatchDetails] = useState<BatchDetails | null>(null);
+  const [packetDetails, setPacketDetails] = useState<PacketDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
-  // Fetch batch details and packets on component mount
+  const router = useRouter();
+  const { batchId, productId } = params;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const details = await fetchBatchDetails(productId, batchId);
         setBatchDetails(details);
         const packets = await fetchPacketDetails(productId, batchId);
-        setpacketDetails(packets);
+        setPacketDetails(packets);
       } catch (error) {
         console.error("Error fetching batch or packet details:", error);
       }
@@ -297,17 +86,12 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
     fetchData();
   }, [productId, batchId]);
 
-  // Handle adding a new bottle (packet) to the batch
   const handleAddBottle = async () => {
     setIsLoading(true);
     try {
       await addPacketToBatch(productId, batchId, refractometerReport);
-
-      // Fetch updated packet details after adding a new packet
-      const updatedpackets = await fetchPacketDetails(productId, batchId);
-      setpacketDetails(updatedpackets);
-
-      // Reset state and close dialog
+      const updatedPackets = await fetchPacketDetails(productId, batchId);
+      setPacketDetails(updatedPackets);
       setRefractometerReport("");
       setOpen(false);
     } catch (error) {
@@ -317,54 +101,40 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
     }
   };
 
-  // Handle generating new packets
   const handleGeneratePacket = async () => {
     try {
       await generatePackets(productId, batchId, packetQuantity);
-      setOpenGeneratePacket(false); // Close the dialog after successful generation
+      setOpenGeneratePacket(false);
     } catch (error) {
       console.error("Error generating packets:", error);
     }
   };
 
-  // Open test report in a new tab
   const handleOpenReportInNewTab = () => {
-    const reportUrl = batchDetails?.testReport;
-    if (reportUrl) {
-      window.open(reportUrl, "_blank");
-    } else {
-      console.error("Test report URL not available");
+    if (batchDetails?.testReport) {
+      window.open(batchDetails.testReport, "_blank");
     }
   };
 
-  // Navigate to the existing packets page
   const handleViewExistingPackets = () => {
     router.push(`/admin/${productId}/${batchId}/existing_packets`);
   };
 
-  // Handle sorting
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      // Toggle sort direction if the same column is clicked
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
     } else {
-      // Set new sort key and default to ascending
       setSortKey(key);
       setSortDirection("asc");
     }
   };
 
-  // Sort packet details based on sortKey and sortDirection
-  const sortedpacketDetails = useMemo(() => {
+  const sortedPacketDetails = useMemo(() => {
     return [...packetDetails].sort((a, b) => {
-      if (!sortKey) return 0; // No sorting
+      if (!sortKey) return 0;
       let aValue: any;
       let bValue: any;
 
-      // if (sortKey === "no") {
-      //   aValue = packetDetails.indexOf(a) + 1;
-      //   bValue = packetDetails.indexOf(b) + 1;
-      // }
       if (sortKey === "serialNo") {
         aValue = a.serialNo?.toLowerCase() || "";
         bValue = b.serialNo?.toLowerCase() || "";
@@ -378,25 +148,18 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
     });
   }, [packetDetails, sortKey, sortDirection]);
 
-  // Handle Export to Excel
   const handleExportToExcel = () => {
-    // Prepare data for Excel
-    const data = sortedpacketDetails.map((pkg, index) => ({
+    const data = sortedPacketDetails.map((pkg, index) => ({
       No: index + 1,
       "Serial Number": pkg.serialNo || "",
       "Refractometer Report": pkg.refractometerReport || "",
     }));
 
-    // Create a worksheet
     const worksheet = XLSX.utils.json_to_sheet(data);
-    // Create a workbook and add the worksheet
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Batch Details");
-    // Generate buffer
     const excelBuffer = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
-    // Create a blob
     const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    // Trigger download
     const url = window.URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
@@ -406,193 +169,226 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
   };
 
   return (
-    <div className="min-h-screen max-w-7xl pt-10 mx-auto p-8 bg-gray-100">
-      {/* Batch Number Section */}
-      <div className="bg-blue-600 p-6 rounded-md mb-6 text-center shadow-md text-white">
-        <h1 className="text-2xl font-bold">
-          Batch No: {batchDetails?.batchNo || "Loading..."}
-        </h1>
-      </div>
-
-      {/* Batch Details & Report Button */}
-      <div className="flex justify-between items-center mb-6 space-x-4">
-        <div className="bg-yellow-400 p-6 rounded-md shadow-md flex-1">
-          <h2 className="text-lg font-semibold">Batch Details</h2>
-          <p>Limit: {batchDetails?.limitQuantity ?? "Not specified"}</p>
-          <p>Quantity: {batchDetails?.quantity ?? "Not available"}</p>
-        </div>
-        <Button className="bg-yellow-400 p-6 rounded-md shadow-md flex-1">
-        Add Refractometer Report
-        </Button>
-        <Button
-          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-          onClick={handleExportToExcel}
-        >
-          View Batch Report (PDF)
-        </Button>
-      </div>
-
-      {/* Export to Excel Button */}
-      <div className="mb-4 flex justify-end">
-        <Button
-          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-          onClick={handleExportToExcel}
-        >
-          Export to Excel
-        </Button>
-      </div>
-
-      {/* Table Section */}
-      <div className="overflow-x-auto bg-white shadow-lg rounded-md">
-        <table className="min-w-full bg-gray-100">
-          <thead className="bg-gray-300">
-            <tr>
-              {/* No Column with Sorting */}
-              <th
-                className="px-6 py-3 border cursor-pointer text-center"
-                onClick={() => handleSort("no")}
-              >
-                <div className="inline-flex items-center">
-                  No
-                  {/* {sortKey === "no" && (
-                    sortDirection === "asc" ? (
-                      <ArrowUp className="ml-1 w-4 h-4 inline" />
-                    ) : (
-                      <ArrowDown className="ml-1 w-4 h-4 inline" />
-                    )
-                  )} */}
+    <div className="min-h-screen bg-[url('/grid.svg')] bg-fixed bg-green-50/90 dark:bg-green-950/90">
+      <div className="absolute inset-0 bg-gradient-to-b from-green-50/90 to-green-100/90 dark:from-green-950/90 dark:to-green-900/90" />
+      
+      <div className="relative container mx-auto px-4 py-8 space-y-6">
+        {/* Header Section */}
+        <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0">
+          <CardContent className="p-6">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                  <Layers className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
-              </th>
-              {/* Serial Number Column with Sorting */}
-              <th
-                className="px-6 py-3 border cursor-pointer text-center"
-                onClick={() => handleSort("serialNo")}
-              >
-                <div className="inline-flex items-center">
-                  Serial Number
-                  {sortKey === "serialNo" && (
-                    sortDirection === "asc" ? (
-                      <ArrowUp className="ml-1 w-4 h-4 inline" />
-                    ) : (
-                      <ArrowDown className="ml-1 w-4 h-4 inline" />
-                    )
-                  )}
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+                    Batch {batchDetails?.batchNo || "Loading..."}
+                  </h1>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Manage batch details and packets
+                  </p>
                 </div>
-              </th>
-              {/* Refractometer Report Column without Sorting */}
-              <th className="px-6 py-3 border text-center">Refractometer Report</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedpacketDetails.length ? (
-              sortedpacketDetails.map((pkg, index) => (
-                <tr key={pkg.id} className="hover:bg-gray-200">
-                  <td className="px-6 py-4 border text-center">{index + 1}</td>
-                  <td className="px-6 py-4 border text-center">{pkg.serialNo || "N/A"}</td>
-                  <td className="px-6 py-4 border text-center">{pkg.refractometerReport || "N/A"}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={3} className="px-6 py-4 border text-center">
-                  No packet details found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 right-8 space-y-4">
-        {/* Generate Packet Button */}
-        <Button
-          className="text-white bg-indigo-600 hover:bg-indigo-700 flex items-center gap-2"
-          onClick={() => setOpenGeneratePacket(true)}
-        >
-          <Package className="w-4 h-4" /> Generate Packet
-        </Button>
-
-        {/* Existing Packet Button */}
-        <Button
-          className="text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-          onClick={handleViewExistingPackets}
-        >
-          <List className="w-4 h-4" /> Existing Packets
-        </Button>
-      </div>
-
-      {/* Add Bottle Dialog */}
-      {open && (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Bottle</DialogTitle>
-            </DialogHeader>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label
-                  htmlFor="refractometer-report"
-                  className="block text-sm font-medium"
+              </div>
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleOpenReportInNewTab}
+                  className="flex items-center gap-2"
                 >
+                  <FileText className="w-4 h-4" />
+                  View Report
+                </Button>
+                <Button
+                  onClick={handleExportToExcel}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Excel
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Batch Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                  <Package className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Total Quantity</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+                    {batchDetails?.quantity || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
+                  <Beaker className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Limit Quantity</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">
+                    {batchDetails?.limitQuantity || 0}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Packets Table */}
+        <Card className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-0">
+          <CardContent className="p-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                      No
+                    </th>
+                    <th
+                      className="px-6 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400 cursor-pointer"
+                      onClick={() => handleSort("serialNo")}
+                    >
+                      <div className="flex items-center gap-2">
+                        Serial Number
+                        {sortKey === "serialNo" && (
+                          sortDirection === "asc" ? (
+                            <ArrowUp className="w-4 h-4" />
+                          ) : (
+                            <ArrowDown className="w-4 h-4" />
+                          )
+                        )}
+                      </div>
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Refractometer Report
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedPacketDetails.map((packet, index) => (
+                    <tr
+                      key={packet.id}
+                      className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50/50 dark:hover:bg-gray-800/50"
+                    >
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {index + 1}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {packet.serialNo || "N/A"}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                        {packet.refractometerReport || "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Floating Action Buttons */}
+        <div className="fixed bottom-8 right-8 space-y-4">
+          <Button
+            onClick={() => setOpenGeneratePacket(true)}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-lg flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" /> Generate Packets
+          </Button>
+          <Button
+            onClick={handleViewExistingPackets}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center gap-2"
+          >
+            <List className="w-4 h-4" /> View Existing
+          </Button>
+        </div>
+
+        {/* Add Bottle Dialog */}
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FlaskConical className="w-5 h-5" />
+                Add New Bottle
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Refractometer Report
                 </label>
                 <Textarea
-                  id="refractometer-report"
                   value={refractometerReport}
                   onChange={(e) => setRefractometerReport(e.target.value)}
-                  className="w-full mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="border-gray-200 dark:border-gray-700"
                 />
               </div>
             </div>
             <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
               <Button
-                className={`bg-green-500 text-white ${
-                  isLoading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
                 onClick={handleAddBottle}
                 disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 {isLoading ? "Adding..." : "Add Bottle"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
 
-      {/* Generate Packet Dialog */}
-      {openGeneratePacket && (
+        {/* Generate Packet Dialog */}
         <Dialog open={openGeneratePacket} onOpenChange={setOpenGeneratePacket}>
-          <DialogContent>
+          <DialogContent className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
             <DialogHeader>
-              <DialogTitle>Generate Packets</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Generate Packets
+              </DialogTitle>
             </DialogHeader>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label htmlFor="packet-quantity" className="block text-sm font-medium">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   Quantity
                 </label>
                 <Input
-                  id="packet-quantity"
                   type="number"
                   value={packetQuantity}
                   onChange={(e) => setPacketQuantity(Number(e.target.value))}
-                  className="w-full mt-1 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  className="border-gray-200 dark:border-gray-700"
                   placeholder="Enter quantity"
                 />
               </div>
             </div>
             <DialogFooter>
+              <Button variant="outline" onClick={() => setOpenGeneratePacket(false)}>
+                Cancel
+              </Button>
               <Button
-                className="bg-indigo-500 text-white"
                 onClick={handleGeneratePacket}
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
-                Generate Packets
+                Generate
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      )}
+      </div>
     </div>
   );
 };
