@@ -406,7 +406,7 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
+    <div className="min-h-screen max-w-7xl pt-10 mx-auto p-8 bg-gray-100">
       {/* Batch Number Section */}
       <div className="bg-blue-600 p-6 rounded-md mb-6 text-center shadow-md text-white">
         <h1 className="text-2xl font-bold">
@@ -421,9 +421,12 @@ const BatchDetails: React.FC<Props> = ({ params }) => {
           <p>Limit: {batchDetails?.limitQuantity ?? "Not specified"}</p>
           <p>Quantity: {batchDetails?.quantity ?? "Not available"}</p>
         </div>
+        <Button className="bg-yellow-400 p-6 rounded-md shadow-md flex-1">
+        Add Refractometer Report
+        </Button>
         <Button
-          className="text-white bg-red-600 hover:bg-red-700"
-          onClick={handleOpenReportInNewTab}
+          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+          onClick={handleExportToExcel}
         >
           View Batch Report (PDF)
         </Button>

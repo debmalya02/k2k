@@ -181,7 +181,7 @@ const SearchResult = ({ params }: { params: { serialNo: string } }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 dark:from-green-900 dark:to-green-950 py-10 px-4">
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 dark:from-green-900 dark:to-green-950 py-10 px-4 w-screen">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Skeleton className="w-full h-[400px] rounded-xl" />

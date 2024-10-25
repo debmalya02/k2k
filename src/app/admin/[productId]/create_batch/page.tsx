@@ -80,7 +80,7 @@ const BatchesPage: React.FC<Props> = ({ params }) => {
 
 
   return (
-    <div className="min-h-screen p-8">
+    <div className="min-h-screen max-w-7xl mx-auto pt-10 p-8">
       {/* Product Name */}
       <h1 className="text-left text-3xl font-semibold mb-4">{productDetails?.productName || 'Product Name'}</h1>
 

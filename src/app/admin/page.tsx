@@ -56,7 +56,7 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="h-[calc(100vh-100px)] w-full flex flex-col items-center">
+    <div className="h-[calc(100vh-100px)] max-w-7xl pt-10 flex flex-col items-center">
       <div className="grid grid-cols-4 gap-4" >
         
         {productCategories.map((category, index) => (

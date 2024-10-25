@@ -166,7 +166,7 @@ const ExistingPacket: React.FC<Props> = ({ params }) => {
   };
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
+    <div className="min-h-screen max-w-7xl mx-auto pt-10 p-8 bg-gray-100">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-center text-gray-800">
           Existing Packets Without Refractometer Report
